@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>mainWindow</class>
+ <widget class="QMainWindow" name="mainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>883</width>
+    <height>671</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout"/>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>883</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="loadMenu">
+    <property name="title">
+     <string>载入</string>
+    </property>
+    <addaction name="loadDeviceDatabaseAction"/>
+    <addaction name="checkDeviceInfosAction"/>
+    <addaction name="separator"/>
+    <addaction name="checkConnectivityAction"/>
+   </widget>
+   <widget class="QMenu" name="uiMenu">
+    <property name="title">
+     <string>视图</string>
+    </property>
+    <addaction name="addViewerAction"/>
+    <addaction name="deleteViewerAction"/>
+   </widget>
+   <addaction name="loadMenu"/>
+   <addaction name="uiMenu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="loadDeviceDatabaseAction">
+   <property name="text">
+    <string>选择DeviceDB</string>
+   </property>
+  </action>
+  <action name="checkDeviceInfosAction">
+   <property name="text">
+    <string>设备信息</string>
+   </property>
+  </action>
+  <action name="checkConnectivityAction">
+   <property name="text">
+    <string>检查连接</string>
+   </property>
+  </action>
+  <action name="addViewerAction">
+   <property name="text">
+    <string>add</string>
+   </property>
+  </action>
+  <action name="deleteViewerAction">
+   <property name="text">
+    <string>minus</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
