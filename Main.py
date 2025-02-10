@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QApplication, QLayout
 import DeviceDatabaseAgent
 import MainView
 import UIManager
-import DeviceUI
+import DeviceSingleToneUI
 
 # deviceUI 250* 200
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # data logic
     ddsFilter = DeviceDatabaseAgent.AD9910Filter()
-    databaseManager = UIManager.DeviceDatabaseAssetsManager(ddsFilter)
+    databaseManager = DeviceDatabaseAgent.DeviceDatabaseAssetsManager(ddsFilter)
 
 
     # ui

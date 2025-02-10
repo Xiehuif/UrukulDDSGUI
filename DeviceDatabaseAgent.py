@@ -1,5 +1,11 @@
+import importlib.util
+import sys
+
+from PyQt6 import QtWidgets
 from artiq.coredevice.ad9910 import AD9910
 from artiq.coredevice.urukul import CPLD
+
+import UIManager
 
 
 class DeviceReaderBase:
@@ -64,6 +70,34 @@ class AD9910Filter(DeviceReaderBase):
             group = AD9910DriverGroup(cpldKey, buffer.get(cpldKey))
             targetList.append(group)
         return targetList
+
+class DeviceDatabaseAssetsManager:
+
+    def __init__(self, targetFilter):
+        self._dbPath = None
+        self._targetModule = None
+        self._targetFilter: AD9910Filter = targetFilter
+        self._moduleName = 'ARTIQDeviceDatabase'
+
+    def GetPath(self):
+        return self._dbPath
+
+    def AppointNewDatabase(self, uiManager: UIManager.DeviceUIManager):
+        dialog = QtWidgets.QFileDialog()
+        pathTuple = dialog.getOpenFileName()
+        path = pathTuple[0]
+        print(path)
+        self._dbPath = path
+
+        spec = importlib.util.spec_from_file_location(self._moduleName, self._dbPath)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[self._moduleName] = module
+        spec.loader.exec_module(module)
+
+        self._targetFilter.Read(module)
+        print(self._targetFilter.FindAD9910s())
+        uiManager.RefreshUI(self._targetFilter)
+
 
 # for test only
 if __name__ == '__main__':

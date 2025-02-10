@@ -230,8 +230,9 @@ def _build_experiment(device_mgr, dataset_mgr, args):
 
 '''
 
-def _build_experiment(device_mgr, dataset_mgr, args, targetModule='__main__'):
-    arguments = parse_arguments(args.arguments)
+def _build_experiment(device_mgr, dataset_mgr, args, targetModule=sys.modules["__main__"], arguments={}):
+    # 直接传入参数
+    # arguments = parse_arguments(inputArguments)
     argument_mgr = ArgumentManager(arguments)
     managers = (device_mgr, dataset_mgr, argument_mgr, {})
     # 不再适用
@@ -274,8 +275,14 @@ def _build_experiment(device_mgr, dataset_mgr, args, targetModule='__main__'):
     }
     # 应用ID
     device_mgr.virtual_devices["scheduler"].expid = expid
-    # 生成实验实例
-    exp_inst = get_experiment(module, args.class_name)(managers)
+
+    # 生成实验实例，这里是先获取实验类，然后实例化这个类
+    # exp_inst = get_experiment(module, args.class_name)(managers)
+
+    # 如下两行等价如上
+    exp_cls = get_experiment(module, args.class_name)
+    exp_inst = exp_cls(managers)
+
     # 这个函数用来处理那些没有被处理的参数
     # 注意到通过cmd形式执行的artiq_run可以附加指定的参数，这些参数以 KEY=VALUE 的形式给定
     # 但是不代表这些参数在实验的类里就一定被定义了，可能传入不被定义的参数，这里主要是handle这些参数
@@ -324,7 +331,22 @@ def run(with_file=False):
 '''
 
 # new run
-def run(module = sys.modules["__main__"],arguments):
+def run(module=sys.modules["__main__"], arguments={}, deviceDatabasePath='device_db.py'):
+    '''
+
+    实验的运行入口
+
+    :param module: 实验文件模块
+    :param arguments: 参数，key和value都是str类型，自动强制转换
+    :param deviceDatabasePath: device_db文件绝对路径
+    :return: None
+
+    '''
+
+    # 这里我们直接传入参数，先检查类型
+    if not isinstance(arguments, dict):
+        print('FAULT WHEN PASS ARGUMENTS: CLASS NOT DICT OR NONE')
+        return
     # 不使用文件
     with_file = False
     # 参数解析器，原本是命令行执行时用于解析参数的，现在废弃，将直接使用默认参数
@@ -332,7 +354,7 @@ def run(module = sys.modules["__main__"],arguments):
     # 初始化logger
     common_args.init_logger_from_args(args)
     # 初始化设备管理器，这里利用到了device_db
-    device_mgr = DeviceManager(DeviceDB(args.device_db),
+    device_mgr = DeviceManager(DeviceDB(deviceDatabasePath),
                                virtual_devices={"scheduler": DummyScheduler(),
                                                 "ccb": DummyCCB()})
     # 初始化数据集，应该是某个artiq的数据管理功能
@@ -343,7 +365,7 @@ def run(module = sys.modules["__main__"],arguments):
 
         try:
             # 获取实验实例
-            exp_inst = _build_experiment(device_mgr, dataset_mgr, args)
+            exp_inst = _build_experiment(device_mgr, dataset_mgr, args, module, arguments)
             exp_inst.prepare()
             exp_inst.run()
             device_mgr.notify_run_end()

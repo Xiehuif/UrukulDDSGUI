@@ -1,9 +1,11 @@
 import importlib.util
 import sys
 
-from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QLineEdit
+from PyQt6 import QtWidgets, QtCore, QtGui
 
-import DeviceUI
+import ArgumentManager
+import DeviceSingleToneUI
 from DeviceDatabaseAgent import AD9910Filter
 
 
@@ -12,7 +14,7 @@ class DeviceUIManager:
     def __init__(self, mainWindowLayout: QtWidgets.QLayout):
         self._mainWindow = mainWindowLayout
         self._widgetGroup: list[QtWidgets.QWidget] = []
-        self._uiGroup: list[DeviceUI.Ui_Form] = []
+        self._uiGroup: list[DeviceSingleToneUI.Ui_Form] = []
         self._mainWindow.addStretch()
         self.AddDeviceUI()
 
@@ -29,7 +31,7 @@ class DeviceUIManager:
 
     def AddDeviceUI(self, filter = None):
         widget = QtWidgets.QWidget()
-        deviceUI = DeviceUI.Ui_Form()
+        deviceUI = DeviceSingleToneUI.Ui_Form()
         deviceUI.setupUi(widget)
         self._mainWindow.insertWidget(len(self._widgetGroup), widget)
         self._widgetGroup.append(widget)
@@ -46,27 +48,47 @@ class DeviceUIManager:
             ui = self._uiGroup.pop()
             self._mainWindow.removeWidget(widget)
 
-class DeviceDatabaseAssetsManager:
+    def GetWidgetNumber(self):
+        return len(self._widgetGroup)
 
-    def __init__(self, targetFilter):
-        self._dbPath = None
-        self._targetModule = None
-        self._targetFilter: AD9910Filter = targetFilter
-        self._moduleName = 'ARTIQDeviceDatabase'
+    def ArgumentParser(self):
+        # only Single-Tone
+        target = []
+        for ui in self._uiGroup:
+            # Get str
+            targetDeviceKey = ui.targetDeviceComboBox.itemText()
+            targetAmplitudeStr = ui.amplitudeValue.text()
+            targetPhaseStr = ui.phaseValue.text()
+            targetFrequencyStr = ui.frequencyValue.text()
+            targetSwitchState = ui.enableCheckBox.checkState()
 
-    def AppointNewDatabase(self, uiManager: DeviceUIManager):
-        dialog = QtWidgets.QFileDialog()
-        pathTuple = dialog.getOpenFileName()
-        path = pathTuple[0]
-        print(path)
-        self._dbPath = path
+            # Get Unit
+            targetFrequencyUnit = ui.frequencyUnitComboBox.itemText()
 
-        spec = importlib.util.spec_from_file_location(self._moduleName, self._dbPath)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[self._moduleName] = module
-        spec.loader.exec_module(module)
+            # Convert type
+            if targetSwitchState == QtCore.Qt.CheckState.Checked:
+                switch = True
+            else:
+                switch = False
+            amplitude = float(targetAmplitudeStr)
+            phase = float(targetPhaseStr)
+            frequency = float(targetFrequencyStr)
+            if targetFrequencyUnit == 'MHz':
+                print('used MHz')
+                convertedFrequency = frequency * 1000000
+            elif targetFrequencyUnit == 'KHz':
+                print('used KHz')
+                convertedFrequency = frequency * 1000
 
-        self._targetFilter.Read(module)
-        print(self._targetFilter.FindAD9910s())
-        uiManager.RefreshUI(self._targetFilter)
+            # Generate
+            currentDict = {
+                ArgumentManager.DDSSingleToneArgument.DeviceKey : targetDeviceKey,
+                ArgumentManager.DDSSingleToneArgument.Phase : phase,
+                ArgumentManager.DDSSingleToneArgument.Frequency : convertedFrequency,
+                ArgumentManager.DDSSingleToneArgument.Amplitude : amplitude,
+                ArgumentManager.DDSSingleToneArgument.Switch : switch
+            }
+
+            target.append(currentDict)
+        return target
 

@@ -1,12 +1,15 @@
 from copy import deepcopy
 from enum import Enum
 
+import UIManager
 
-class DDSArgument(Enum):
+
+class DDSSingleToneArgument(Enum):
     Amplitude = 0
     Frequency = 1
     Phase = 2
     DeviceKey = 3
+    Switch = 4
 
 class DDSArgumentProfiles:
 
@@ -21,3 +24,15 @@ class DDSArgumentProfiles:
 
     def Clear(self):
         self._profiles = {}
+
+    def ReadFromUI(self, deviceUIManager: UIManager.DeviceUIManager):
+        datas = deviceUIManager.ArgumentParser()
+        for data in datas:
+            deviceKey = data.get(DDSSingleToneArgument.DeviceKey)
+            args = {}
+            for item in DDSSingleToneArgument:
+                if item == DDSSingleToneArgument.DeviceKey:
+                    continue
+                else:
+                    args.update({item: data.get(item)})
+            self.SetData(deviceKey, args)
